@@ -843,7 +843,7 @@ Function Email-Report {
 # =================================================
 
 Write-Host ""
-$scrap = Inform-Operator -preset "initiate"
+$null = Inform-Operator -preset "initiate"
 Write-Host ""
 $date = date
 
