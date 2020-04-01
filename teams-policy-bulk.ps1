@@ -163,7 +163,7 @@ Script Specific:
 - [ ] Check if row is valid user and skip if not
 - [ ] Supply credentials via CLI instead of waiting for GUI prompt
 - [x] Log entry for each operation with success or fail and errormsg [2.20]
-- [ ] Take AD group as user source
+- [ ] Take AD group as user source                                   [2.3.0]
 - [ ] Take OU as user source
 
 Script Agnostic: (modularise later)
