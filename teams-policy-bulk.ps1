@@ -95,19 +95,19 @@ param (
 	,
 	
 	[Alias('showlog','showlogfile','openlog')]
-	[switch]$param_showlog=$true
+	[switch]$param_showlog
 
 )
 
 # Top level global variables (Variables are script agnostic but with script specific values)
-$VERSION 	= "2.21"
+$VERSION 	= "2.2.2"
 $SCRIPTNAME = "Bulk Teams Policy Update Script"
 $LOGPATH	= "\\jsracs\dfs\adminhome\sttusj\"
 $LOGNAME	= "$(Get-Date -format yyyy-MM-dd_HH-mm-ss)_$($SCRIPTNAME -replace ' ', '').log"
 $LOGFILEFULL= "$LOGPATH$LOGNAME"
 
 #open the logfile
-If ($param_showlog) { start powershell.exe "gc $LOGFILEFULL -wait" }
+If ($param_showlog) { Start-Process powershell.exe "gc $LOGFILEFULL -wait" }
 
 #Start Script
 Function Main {
@@ -132,7 +132,8 @@ $CHANGELOG_TEXT = "
         - re-wrote Inform-Operator to use Log-Entry
         - replaced most remaining Write-Host with Log-Entry
         - improved wording of many log entries
-        - added 
+   2.2.1 - switched to semantic versioning                     2020-04-01
+         - minor syntax best practice corrections
   ------------------------------Credits-----------------------------------
   Various internet sources may be used in the writing of this script.
   Sources and any code copied verbatim, will be noted in the function header
@@ -175,7 +176,7 @@ Script Agnostic: (modularise later)
  
 $HELP_TEXT = "
 ===========================================================================
-                              Help: 
+                              Help:
 ---------------------------------------------------------------------------
  - Switches:
     -help           displays this help text
@@ -183,11 +184,16 @@ $HELP_TEXT = "
     -features       displays list of implemented and planned features
     -changelog      displays history of changes and versions
     -issues         displays list of known issues (also -bugs, -knownissues)
-    -test           runs the script in test mode [script specific]
+	-test           runs the script in test mode [script specific]
+	-showlog        opens the logfile in a new powershell window with gc -wait
+ - Switches: [script specific]
+	-singleuser     runs the script on a single user (takes a UPN)
+    -csv            specifies csv to use as input (needs full path)
  - Examples
-    - Example1:     "".\$SCRIPTNAME.ps1"" -features
+	- Example1:     "".\$SCRIPTNAME.ps1"" -features
+	- Example2:     Get-Help .\$SCRIPTNAME.ps1 -examples
  -------------------------------------------------------------------------
- Other info: Help template version 0.2 [updated from 0.1 on 2019-10-14]
+ Other info: Help template version 0.3 [updated from 0.2 on 2020-04-01]
 ==========================================================================="
 
 $ISSUES_TEXT = "
@@ -619,12 +625,14 @@ function Format-Report {
 '@
 
 	#alternative html style, use this once everything is working OK
+	<#
 	$altcss = 
 	"<style>BODY{font-family: Arial; font-size: 10pt;}
 	TABLE{border: 1px solid black; border-collapse: collapse;}
 	TH{border: 1px solid black; background: #dddddd; padding: 5px; }
 	TD{border: 1px solid black; padding: 5px; }
 	</style>"
+	#>
 
 	$sb = New-Object System.Text.StringBuilder
 	[void]$sb.AppendLine($css)
@@ -845,13 +853,13 @@ Function Email-Report {
 Write-Host ""
 $null = Inform-Operator -preset "initiate"
 Write-Host ""
-$date = date
+$date = Get-Date
 
 
 # Announce version to operator [Script Agnostic]
-$welcome = "`n" + ("Welcome").Padleft(40," ")+ "`n"
-Write-Host "`n" + ("Welcome").Padleft(40," ")+ "`n" -foreground "Yellow"
-Log-Entry "You are running version " -nonewline; Log-Entry $VERSION -foreground "Magenta" -nonewline
+Write-Host "`n" ("Welcome").Padleft(40," ") "`n" -foreground "Yellow"
+Log-Entry "You are running version " -nonewline
+Log-Entry $VERSION -foreground "Magenta" -nonewline
 Log-Entry " of the " -nonewline
 Log-Entry $SCRIPTNAME -foreground "Green" -nonewline
 Log-Entry " script. The time is $date"
@@ -861,12 +869,12 @@ Log-Verbose "Now checking switches and arguments"
 	
 	#info dumps
 	$exitflag = $false
-	If ($requirements) { $s = Inform-Operator -preset "requirements"; $exitflag = $true }
-	If ($param_changelog) { $s = Inform-Operator -preset "changelog"; $exitflag = $true }
-	If ($param_features) { $s = Inform-Operator -preset "features"; $exitflag = $true }
-	If ($param_help) { $s = Inform-Operator -preset "help"; $exitflag = $true }
-	If ($param_issues) { $s = Inform-Operator -preset "issues"; $exitflag = $true }
-	If ($param_requirements) { $s = Inform-Operator -preset "requirements"; $exitflag = $true }
+	If ($requirements) { $null = Inform-Operator -preset "requirements"; $exitflag = $true }
+	If ($param_changelog) { $null = Inform-Operator -preset "changelog"; $exitflag = $true }
+	If ($param_features) { $null = Inform-Operator -preset "features"; $exitflag = $true }
+	If ($param_help) { $null = Inform-Operator -preset "help"; $exitflag = $true }
+	If ($param_issues) { $null = Inform-Operator -preset "issues"; $exitflag = $true }
+	If ($param_requirements) { $null = Inform-Operator -preset "requirements"; $exitflag = $true }
 	If ($exitflag) { Log-Verbose "Exiting due to exitflag"; End }
 	
 	#script specific
@@ -909,9 +917,6 @@ If (!$param_singleuser) {
 	$users += $userrow
 }
 
-#initialise 
-$logarray = @()
-
 #set up row template. 
 #this template is copied and each instance added to $resultsArray
 $rowTemplate = @{
@@ -942,10 +947,9 @@ If ($callingToApply -or $messagingToApply -or $packageToApply) {
 		$guicounter = $counter+1
 		
 		$UPN = $users[$counter].Mail
-		$username = 
 		$name = $users[$counter].GivenName + " " + $users[$counter].Surname
 		
-		Inform-Operator -start -function "$guicounter of $($users.count) $($row.username) $name`t $UPN"
+		Inform-Operator -start -function "$guicounter of $($users.count) $($row.username) $name $UPN"
 		
 		#Write-Host "Processing $guicounter of $($users.count) " -nonewline
 		#Write-Host " $($users[$counter].Mail)" -nonewline
@@ -1035,7 +1039,7 @@ Log-Entry ""
 Function Global:ConvertTo-Text([Alias("Value")]$O, [Int]$Depth = 9, [Switch]$Type, [Switch]$Expand, [Int]$Strip = -1, [String]$Prefix, [Int]$i) {
 	Function Iterate($Value, [String]$Prefix, [Int]$i = $i + 1) {ConvertTo-Text $Value -Depth:$Depth -Strip:$Strip -Type:$Type -Expand:$Expand -Prefix:$Prefix -i:$i}
 	$NewLine, $Space = If ($Expand) {"`r`n", ("`t" * $i)} Else{$Null}
-	If ($O -eq $Null) {$V = '$Null'} Else {
+	If ($Null -eq $O) {$V = '$Null'} Else {
 		$V = If ($O -is "Boolean")  {"`$$O"}
 		ElseIf ($O -is "String") {If ($Strip -ge 0) {'"' + (($O -Replace "[\s]+", " ") -Replace "(?<=[\s\S]{$Strip})[\s\S]+", "...") + '"'} Else {"""$O"""}}
 		ElseIf ($O -is "DateTime") {$O.ToString("yyyy-MM-dd HH:mm:ss")} 
@@ -1044,7 +1048,7 @@ Function Global:ConvertTo-Text([Alias("Value")]$O, [Int]$Depth = 9, [Switch]$Typ
 		ElseIf ($i -gt $Depth) {$Type = $True; "..."}
 		ElseIf ($O -is "Array") {"@(", @(&{For ($_ = 0; $_ -lt $O.Count; $_++) {Iterate $O[$_]}}), ", ", ")"}
 		ElseIf ($O.GetEnumerator.OverloadDefinitions) {"@{", @(ForEach($_ in $O.Keys) {Iterate $O.$_ "$_ = "}), "; ", "}"}
-		ElseIf ($O.PSObject.Properties -and !$O.value.GetTypeCode) {"{", @(ForEach($_ in $O.PSObject.Properties | Select -Exp Name) {Iterate $O.$_ "$_`: "}), "; ", "}"}
+		ElseIf ($O.PSObject.Properties -and !$O.value.GetTypeCode) {"{", @(ForEach($_ in $O.PSObject.Properties | Select-Object -Exp Name) {Iterate $O.$_ "$_`: "}), "; ", "}"}
 		Else {$Type = $True; "?"}}
 	If ($Type) {$Prefix += "[" + $(Try {$O.GetType()} Catch {$Error.Remove($Error[0]); "$Var.PSTypeNames[0]"}).ToString().Split(".")[-1] + "]"}
 	"$Space$Prefix" + $(If ($V -is "Array") {
