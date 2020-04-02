@@ -100,7 +100,7 @@ param (
 )
 
 # Top level global variables (Variables are script agnostic but with script specific values)
-$VERSION 	= "2.2.2"
+$VERSION 	= "2.2.1"
 $SCRIPTNAME = "Bulk Teams Policy Update Script"
 $LOGPATH	= "\\jsracs\dfs\adminhome\sttusj\"
 $LOGNAME	= "$(Get-Date -format yyyy-MM-dd_HH-mm-ss)_$($SCRIPTNAME -replace ' ', '').log"
