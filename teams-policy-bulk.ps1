@@ -3,7 +3,6 @@
 Designed to do bulk application of Teams calling and messaging policies to 0365 users.
 
 .DESCRIPTION
- LOCATION:		\\jsracs\dfs\itadmin\sitedoc\scripts
  REQUIREMENTS:	Use -requirements
  USAGE: 		Use -help or run get-help .\script.ps1
 				
@@ -35,7 +34,9 @@ PS> get-help .\teams-policy-bulk.ps1 -full
 	reopen the powershell window before I could re-establish the session.
 	
 .LINK
+https://github.com/gostega/teams-bulk-policy
 
+#note - there need to be at least two empty lines below the end of the help
 #>
 
 
@@ -100,9 +101,9 @@ param (
 )
 
 # Top level global variables (Variables are script agnostic but with script specific values)
-$VERSION 	= "2.2.1"
+$VERSION 	= "2.3.0"
 $SCRIPTNAME = "Bulk Teams Policy Update Script"
-$LOGPATH	= "\\jsracs\dfs\adminhome\sttusj\"
+$LOGPATH	= "C:\logs\" #needs trailing slash \
 $LOGNAME	= "$(Get-Date -format yyyy-MM-dd_HH-mm-ss)_$($SCRIPTNAME -replace ' ', '').log"
 $LOGFILEFULL= "$LOGPATH$LOGNAME"
 
@@ -114,7 +115,14 @@ Function Main {
 
 	#set the target file for logging
 	If ($param_logfilepath) { Set-LogFile $param_logfilepath } 
-	else { Set-LogFile $LOGFILEFULL }
+	If (-Not $param_nodefaults) {
+		If (Test-Path($LOGFILEFULL)) {
+			Set-LogFile $LOGFILEFULL 
+		} else {
+			Log-Entry "No acceptable logfile path provided in paramaters or coded in script defaults. Using default log file location" -foreground 'DarkGray'
+			Log-Entry "Logging to %Temp%\$SCRIPTNAME.Log" -foreground 'DarkGray'
+		}
+	}
 
 	
 $CHANGELOG_TEXT = "
@@ -134,6 +142,9 @@ $CHANGELOG_TEXT = "
         - improved wording of many log entries
    2.2.1 - switched to semantic versioning                     2020-04-01
          - minor syntax best practice corrections
+   2.2.2 - removed semi-sensitive domains and paths etc.       2020-04-10
+         - improved help and comment text
+   2.3.0 - improved logfile location handling                  2020-04-11
   ------------------------------Credits-----------------------------------
   Various internet sources may be used in the writing of this script.
   Sources and any code copied verbatim, will be noted in the function header
@@ -142,7 +153,7 @@ $CHANGELOG_TEXT = "
 # Define the requirements to be output later. This section used to be above.
 $REQUIREMENTS_TEXT = "
 ===========================================================================
-                            Requirements: 
+                              Requirements: 
 ---------------------------------------------------------------------------
  - Privileges:
 	- [Credentials] O365 Global Admin
@@ -155,23 +166,27 @@ $REQUIREMENTS_TEXT = "
 
 $FEATURES_TEXT = "
 ===========================================================================
-			FEATURE LIST: [x] = implemented
+       LIST OF PLANNED AND IMPLEMENTED FEATURES: [x] = implemented
 ---------------------------------------------------------------------------
 Script Specific:
 - [x] Single user mode (-singleusermode) to specify single user      [2.11]
 - [x] Take in list of User UPNs from CSV                             [0.10]
 - [ ] Check if row is valid user and skip if not
 - [ ] Supply credentials via CLI instead of waiting for GUI prompt
-- [x] Log entry for each operation with success or fail and errormsg [2.20]
+- [x] Log success or fail (and errmsg if fail) for each row item     [2.20]
 - [ ] Take AD group as user source
 - [ ] Take OU as user source
 
 Script Agnostic: (modularise later)
-- [x] Switches -requirements -features -help -changelog -bugs [0.01]
+- [x] Switches -requirements -features -help -changelog -bugs        [0.01]
 - [x] Comment Based Help [0.01]
-- [ ] Log file lists its path at start and end of file
+- [ ] List log file path at start and end of log
 - [ ] take logfile path at commandline
 - [ ] take email report recipient at commandlline
+- [ ] take email sender and recipient domain suffix at CLI (-emaildomain)
+- [ ] separate params for sender and recipient domain suffixes
+- [ ] take -nogui or -silent switches to remove all non-pipeable console output
+- [x] Semantic versioning                                            [2.2.1]
  ==========================================================================="
  
 $HELP_TEXT = "
@@ -186,6 +201,8 @@ $HELP_TEXT = "
     -issues         displays list of known issues (also -bugs, -knownissues)
 	-test           runs the script in test mode [script specific]
 	-showlog        opens the logfile in a new powershell window with gc -wait
+	-verbose        shows verbose lines in console (normally only show in logfile)
+	-debug			logs debug lines in the logfile (normally not logged)
  - Switches: [script specific]
 	-singleuser     runs the script on a single user (takes a UPN)
     -csv            specifies csv to use as input (needs full path)
@@ -199,10 +216,13 @@ $HELP_TEXT = "
 $ISSUES_TEXT = "
 ===========================================================================
                               Known Issues:
-                      (Move to changelog when fixed.)
+    (delete and move to changelog when fixed. first line is an example)
 ---------------------------------------------------------------------------
-[INTRODUCED][Index][ISSUE]                                                        
-[2.10]      2.10-a -nodefaults switch causes errors [FIXED 2.11]
+    [Version     [Bug       [Issue
+     introduced]  Index]     Description]
+e.g. x.x.x         x.x.x-[a-z] description of issue goes here
+---------------------------------------------------------------------------
+
 ==========================================================================="
 
 # ++++++++++++++++++++++++++++++++
@@ -214,8 +234,9 @@ $bolGlobalTestState = $param_test
 $bolGlobalTestModeRollCall = $false #initialise the variable to false, it should be checked later in the script body section
 $strGlobalCurrentDirectory = "TOIMPLEMENT"
 $ErrorActionPreference = 'Stop'
-$globalReportRecipients = "ITAlerts@jsracs.wa.edu.au"
-$globalSMTPserver = "mail.jsracs.wa.edu.au"
+$strGlobalDefaultDomain = "$env:USERDNSDOMAIN"
+$globalReportRecipients = "ITAlerts@$strGlobalDefaultDomain"
+$globalSMTPserver = "mail.$strGlobalDefaultDomain"
 
 # Script Specific Defaults
 $strGlobalCallingPolicy = "Disable Calling"
@@ -258,12 +279,13 @@ function Get-CurrentLineNumber {
 
 <# -------------------------------------
 .SYNOPSIS
-Display text on the screen to inform the operator of something.
+Display text in the console to inform the operator of something.
 
 .DESCRIPTION
 Takes various preset switches and strings and displays predefined text.
 Has various options such as success or failure, dots ... to indicate progress etc.
-Partially script agnostic (won't do anything unless called, but contains script specific presets which need to be cleaned up)
+Partially script agnostic (won't do anything unless called, but contains
+script specific presets which need to be cleaned up and adjusted for each script)
 
 .VERSION
 2.0 - updated for compatibility with Log-Entry
@@ -767,7 +789,7 @@ Function Email-Report {
 	#also saves time troubleshooting errors, ensures at least a basic email gets through
 	$datesuffix = "[" + $((get-date).ToShortDateString()) + "]"
 	$email = @{}
-	$email.sender = "Email-Reportfunctionv" + $return.version + "@jsracs.wa.edu.au"
+	$email.sender = "Email-ReportfunctionV" + $return.version + "@$strGlobalDefaultDomain"
 	$email.recipients = $globalReportRecipients
 	$email.subject = "Generic Email Report Subject " + $datesuffix
 	$email.body = "Generic Remail Report Body in email report function version " + $return.version
@@ -851,7 +873,7 @@ Function Email-Report {
 # =================================================
 
 Write-Host ""
-$null = Inform-Operator -preset "initiate"
+#$null = Inform-Operator -preset "initiate"
 Write-Host ""
 $date = Get-Date
 
@@ -1019,7 +1041,7 @@ Function InternalOnly-EmailReport {
 	Inform-Operator -start -function "Emailing report"
 	Log-Verbose "Turn on debug logging (-debug) to view the array being sent to the email report function" -nonewline
 	Log-Debug $resultsArray -expand
-	$emailResult = Email-Report -body $resultsArray -html -from "BulkOperationScript@jsracs.wa.edu.au" -subject "Bulk Operations at $(get-date -format HH:mm)" -to $globalReportRecipients
+	$emailResult = Email-Report -body $resultsArray -html -from "BulkOperationScript@$strGlobalDefaultDomain" -subject "Bulk Operations at $(get-date -format HH:mm)" -to $globalReportRecipients
 	Inform-Operator -state $emailResult.Result -notes $emailResult.LastMessage
 }
 InternalOnly-EmailReport
