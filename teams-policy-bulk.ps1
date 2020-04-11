@@ -101,28 +101,31 @@ param (
 )
 
 # Top level global variables (Variables are script agnostic but with script specific values)
-$VERSION 	= "2.3.0"
+$VERSION 	= "2.3.1"
 $SCRIPTNAME = "Bulk Teams Policy Update Script"
 $LOGPATH	= "C:\logs\" #needs trailing slash \
 $LOGNAME	= "$(Get-Date -format yyyy-MM-dd_HH-mm-ss)_$($SCRIPTNAME -replace ' ', '').log"
-$LOGFILEFULL= "$LOGPATH$LOGNAME"
-
-#open the logfile
-If ($param_showlog) { Start-Process powershell.exe "gc $LOGFILEFULL -wait" }
+$strGlobalLogDestination = "$LOGPATH$LOGNAME"
 
 #Start Script
 Function Main {
 
 	#set the target file for logging
-	If ($param_logfilepath) { Set-LogFile $param_logfilepath } 
+	If ($param_logfilepath) { 
+		Set-LogFile $param_logfilepath
+		$strGlobalLogDestination = $param_logfilepath
+	} 
 	If (-Not $param_nodefaults) {
-		If (Test-Path($LOGFILEFULL)) {
-			Set-LogFile $LOGFILEFULL 
+		If (Test-Path($strGlobalLogDestination)) {
+			Set-LogFile $strGlobalLogDestination
 		} else {
 			Log-Entry "No acceptable logfile path provided in paramaters or coded in script defaults. Using default log file location" -foreground 'DarkGray'
-			Log-Entry "Logging to %Temp%\$SCRIPTNAME.Log" -foreground 'DarkGray'
+			$strGlobalLogDestination = "$env:Temp\$($My.Name).Log"
 		}
 	}
+	Log-Entry "Logging to $strGlobalLogDestination" -foreground 'DarkGray'
+	#open the logfile
+	If ($param_showlog) { Start-Process powershell.exe "Get-Content $strGlobalLogDestination -wait" }
 
 	
 $CHANGELOG_TEXT = "
@@ -144,7 +147,8 @@ $CHANGELOG_TEXT = "
          - minor syntax best practice corrections
    2.2.2 - removed semi-sensitive domains and paths etc.       2020-04-10
          - improved help and comment text
-   2.3.0 - improved logfile location handling                  2020-04-11
+   2.3.0 - improved logfile default location handling          2020-04-11
+   2.3.1 - fixed -showlog not working (introduced in 2.3.0)    2020-04-11
   ------------------------------Credits-----------------------------------
   Various internet sources may be used in the writing of this script.
   Sources and any code copied verbatim, will be noted in the function header
@@ -218,8 +222,8 @@ $ISSUES_TEXT = "
                               Known Issues:
     (delete and move to changelog when fixed. first line is an example)
 ---------------------------------------------------------------------------
-    [Version     [Bug       [Issue
-     introduced]  Index]     Description]
+[Version     [Bug       [Issue
+ introduced]  Index]     Description]
 e.g. x.x.x         x.x.x-[a-z] description of issue goes here
 ---------------------------------------------------------------------------
 
