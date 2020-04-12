@@ -165,6 +165,8 @@ $REQUIREMENTS_TEXT = "
 	- MSOnline
 	- MicrosoftTeams (Install-Module MicrosoftTeams)
 	- Active Directory module (if using AD group or OU as input)
+ - Infastructure
+    - Access to an SMTP server for sending email reports
  - For more details on usage, use the -help argument.
 ---------------------------------------------------------------------------"
 
@@ -184,6 +186,8 @@ Script Specific:
 Script Agnostic: (modularise later)
 - [x] Switches -requirements -features -help -changelog -bugs        [0.01]
 - [x] Comment Based Help [0.01]
+- [ ] Switch to attach results as CSV
+- [ ] Automatically attach results as CSV if too large
 - [ ] List log file path at start and end of log
 - [ ] take logfile path at commandline
 - [ ] take email report recipient at commandlline
