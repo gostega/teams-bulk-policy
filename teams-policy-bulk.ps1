@@ -40,7 +40,7 @@ https://github.com/gostega/teams-bulk-policy
 #>
 
 
-param (
+[CmdletBinding()] param (
 	
 	#script agnostic paramaters
 	[Alias('test')][switch]$param_test, 
@@ -101,7 +101,7 @@ param (
 )
 
 # Top level global variables (Variables are script agnostic but with script specific values)
-$VERSION 	= "2.3.1"
+$VERSION 	= "2.3.2"
 $SCRIPTNAME = "Bulk Teams Policy Update Script"
 $LOGPATH	= "C:\logs\" #needs trailing slash \
 $LOGNAME	= "$(Get-Date -format yyyy-MM-dd_HH-mm-ss)_$($SCRIPTNAME -replace ' ', '').log"
@@ -149,6 +149,7 @@ $CHANGELOG_TEXT = "
          - improved help and comment text
    2.3.0 - improved logfile default location handling          2020-04-11
    2.3.1 - fixed -showlog not working (introduced in 2.3.0)    2020-04-11
+   2.3.2 - fixed -debug not working with Log-Entry             2020-04-14
   ------------------------------Credits-----------------------------------
   Various internet sources may be used in the writing of this script.
   Sources and any code copied verbatim, will be noted in the function header
