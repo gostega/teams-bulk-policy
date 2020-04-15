@@ -101,7 +101,7 @@ https://github.com/gostega/teams-bulk-policy
 )
 
 # Top level global variables (Variables are script agnostic but with script specific values)
-$VERSION 	= "2.3.2"
+$VERSION 	= "2.3.3"
 $SCRIPTNAME = "Bulk Teams Policy Update Script"
 $LOGPATH	= "C:\logs\" #needs trailing slash \
 $LOGNAME	= "$(Get-Date -format yyyy-MM-dd_HH-mm-ss)_$($SCRIPTNAME -replace ' ', '').log"
@@ -110,7 +110,7 @@ $strGlobalLogDestination = "$LOGPATH$LOGNAME"
 #Start Script
 Function Main {
 
-	Log-Debug "Debugging is ON"
+	Log-Debug -Color 'Red' "Debugging is ON"
 	
 	#set the target file for logging
 	If ($param_logfilepath) { 
@@ -122,7 +122,8 @@ Function Main {
 			Set-LogFile $strGlobalLogDestination
 		} else {
 			Log-Entry "No acceptable logfile path provided in paramaters or coded in script defaults. Using default log file location" -foreground 'DarkGray'
-			$strGlobalLogDestination = "$env:Temp\$($My.Name)_$(Get-Date -format yyyy-MM-dd_HH-mm-ss).log"
+			$strGlobalLogDestination = "$env:Temp\$($My.Name).log"
+			#Set-LogFile $strGlobalLogDestination
 		}
 	}
 	Log-Entry "Logging to $strGlobalLogDestination" -foreground 'DarkGray'
@@ -153,6 +154,7 @@ $CHANGELOG_TEXT = "
    2.3.1 - fixed -showlog not working (introduced in 2.3.0)    2020-04-11
    2.3.2 - fixed -debug not being detected                     2020-04-14
    2.3.3 - fixed Log-Debug not working in functions            2020-04-15
+   2.4.0 - Change Log-Debug and Log-Verbose to Red and Yellow  2020-04-15 
   ------------------------------Credits-----------------------------------
   Various internet sources may be used in the writing of this script.
   Sources and any code copied verbatim, will be noted in the function header
@@ -313,7 +315,7 @@ PS> Inform-Operator -start -function "Waiting for export"
 Function Inform-Operator {
 
 	#-----------------Start standard function header------------------#
-	param (	
+	[CmdletBinding()]param (	
 		[switch]$testfunction
 		,
 		[ValidateSet("testmode","livemode","waitmode","disablemode","strictmode","noexportmode","initiate","requirements","features","changelog","help","issues")]
@@ -339,7 +341,7 @@ Function Inform-Operator {
 	$return["Result"] = $false #set it to false at first, so if nothing happens to set it as true we consider the function a failure
 	$return["LastMessage"] = "This function will almost always return true as there's no way to verify Write-Host calls"
 	
-	Log-Debug "Entering $($return.function) function, version $($return.Version)"
+	Log-Verbose -Color 'Yellow' "Entering $($return.function) function, version $($return.Version)"
 	#------------------End standard function header--------------------#
 	
 	#set function variables
@@ -352,7 +354,7 @@ Function Inform-Operator {
 		Return $return
 	} elseif ($WhatIfPreference) {
 		$return.Result = $true
-		Log-Verbose "Whatif switch detected, leaving $($return.function) function, version $($return.Version)"
+		Log-Verbose -Color 'Yellow' "Whatif switch detected, leaving $($return.function) function, version $($return.Version)"
 	} else {
 	
 		#Script Agnostic
@@ -371,34 +373,34 @@ Function Inform-Operator {
 				Log-Entry $strPresetLiveMode -foreground "Black" -background "Yellow" -strip:-1
 			}
 			"initiate" {
-				Log-Verbose $($return.function): detected -$preset parameter from commandline
+				Log-Verbose -Color 'Yellow' $($return.function): detected -$preset parameter from commandline
 				Log-Entry $strPresetInitiate -foreground "DarkGray" -strip:-1
 			}
 			"requirements" {
-				Log-Verbose $($return.function): detected -$preset parameter from commandline
+				Log-Verbose -Color 'Yellow' $($return.function): detected -$preset parameter from commandline
 				Log-Entry $REQUIREMENTS_TEXT -foreground "Green" -strip:-1
 			}
 			"features" {
-				Log-Verbose $($return.function): detected -$preset parameter from commandline
+				Log-Verbose -Color 'Yellow' $($return.function): detected -$preset parameter from commandline
 				Log-Entry $FEATURES_TEXT -foreground "DarkYellow" -strip:-1
 			}
 			"changelog" {
-				Log-Verbose $($return.function): detected -$preset parameter from commandline
+				Log-Verbose -Color 'Yellow' $($return.function): detected -$preset parameter from commandline
 				Log-Entry $CHANGELOG_TEXT -foreground "DarkCyan" -strip:-1
 			}
 			"help" {
-				Log-Verbose $($return.function): detected -$preset parameter from commandline
+				Log-Verbose -Color 'Yellow' $($return.function): detected -$preset parameter from commandline
 				Log-Entry $HELP_TEXT -foreground "Magenta" -strip:-1
 			}
 			"issues" {
-				Log-Verbose $($return.function): detected -$preset parameter from commandline
+				Log-Verbose -Color 'Yellow' $($return.function): detected -$preset parameter from commandline
 				Log-Entry $ISSUES_TEXT -foreground "Magenta" -strip:-1 
 			}
 		}
 		#script specific switches
 		Switch ($preset.ToLower()) {
 			"strict" {
-				Log-Verbose $($return.function): detected -$preset parameter from commandline
+				Log-Verbose -Color 'Yellow' $($return.function): detected -$preset parameter from commandline
 				Log-Entry $strPresetStrictMode -foreground "Green"
 			}
 		}
@@ -435,8 +437,8 @@ Function Inform-Operator {
 		$return.Result = $true
 	}
 	
-	Write-Debug "Leaving $($return.function) function, version $($return.Version)"
-	Write-Debug $($return)
+	Log-Debug -Color 'Red' "Leaving $($return.function) function, version $($return.Version)"
+	Log-Debug -Color 'Red' $($return)
 }
 
 # ----------------------------------------
@@ -553,8 +555,8 @@ Function Function-Template {
 	$return["lastmessage"] = ""
 	$return["result"] = $false #set it to false at first, so if nothing happens to set it as true we consider the function a failure
 	
-	Log-Verbose "Entering $($return.function) function, version $($return.Version)"
-	Log-Verbose "I was called by: $($(Get-PSCallStack)[1].Command) from line: $($(Get-PSCallStack)[1].ScriptLineNumber)"
+	Log-Verbose -Color 'Yellow' "Entering $($return.function) function, version $($return.Version)"
+	Log-Verbose -Color 'Yellow' "I was called by: $($(Get-PSCallStack)[1].Command) from line: $($(Get-PSCallStack)[1].ScriptLineNumber)"
 	#------------------End standard function header--------------------#
 	
 	If ($bolGlobalTestModeRollCall) {
@@ -580,11 +582,11 @@ Function Function-Template {
 		}
 		
 		#-------------Verify----------------# [1.0]
-		Log-Verbose "Verifying if action succeeded"
+		Log-Verbose -Color 'Yellow' "Verifying if action succeeded"
 		Try {
 			$newlyRetrievedValue = "insert function to get value here"
 		} catch {
-			Log-Verbose "Was not able to get updated value for reason: $($_)"
+			Log-Verbose -Color 'Yellow' "Was not able to get updated value for reason: $($_)"
 			If ($bolGlobalStrictChecking) {
 				$return.Result = $false
 				$return.LastMessage = "Not verified. Error: $_"
@@ -603,7 +605,7 @@ Function Function-Template {
 		}
 	}
 	
-	Log-Verbose "Leaving $($return.function) function, version $($return.Version). Result: $($return.result)"
+	Log-Verbose -Color 'Yellow' "Leaving $($return.function) function, version $($return.Version). Result: $($return.result)"
 	Return $return
 }
 
@@ -699,7 +701,7 @@ function Format-Report {
 			<table>
 	")
 	$params = (Get-Command -Name $PSCommandPath).Parameters
-	Log-Debug $params
+	Log-Debug -Color 'Red' $params
 	
 	foreach ($param in $params.Keys) {
 		$paramvalue = (Get-Variable -Name $param -EA SilentlyContinue).Value
@@ -792,8 +794,8 @@ Function Email-Report {
 	$return["version"] = 1.6
 	$return["lastmessage"] = ""
 	$return["result"] = $false #set it to false at first, so if nothing happens to set it as true we consider the function a failure
-	Log-Verbose "Entering $($return.function) function, version $($return.Version)"
-	Log-Verbose "I was called by: $($(Get-PSCallStack)[1].Command) from line: $($(Get-PSCallStack)[1].ScriptLineNumber)"
+	Log-Verbose -Color 'Yellow' "Entering $($return.function) function, version $($return.Version)"
+	Log-Verbose -Color 'Yellow' "I was called by: $($(Get-PSCallStack)[1].Command) from line: $($(Get-PSCallStack)[1].ScriptLineNumber)"
 	#------------------End standard function header--------------------#
 	
 	#set up function default variables
@@ -813,7 +815,7 @@ Function Email-Report {
 	If($subject) 	{ $email.subject = $subject + $datesuffix }
 	If($html)		{ $email.body = $body | ConvertTo-HTML -Head $style }
 	Else{ If($body)	{ $email.body = $body } }
-	Log-Debug "$($return.function): body: $($body)"
+	Log-Debug -Color 'Red' "$($return.function): body: $($body)"
 		
 	#set up the mssage object
 	$messageObject = New-Object System.Net.Mail.MailMessage $email.sender, $email.recipients
@@ -821,14 +823,14 @@ Function Email-Report {
 	$messageObject.IsBodyHTML	= $true
 		
 	#check and tell Format-Report if it's just a simple string 
-	Log-Verbose '$body.GetType() is:' "$($body.GetType())"
+	Log-Verbose -Color 'Yellow' '$body.GetType() is:' "$($body.GetType())"
 	If (($body.GetType()).Name -ne "String")	{
-		Log-Verbose 'We have detected the email message body is an array or other object'
-		Log-verbose 'Calling Format-Report and passing it the $body variable'
+		Log-Verbose -Color 'Yellow' 'We have detected the email message body is an array or other object'
+		Log-Verbose -Color 'Yellow' 'Calling Format-Report and passing it the $body variable'
 		$messageObject.Body = Format-Report -bodyarray $body
 	} else {
-		Log-Verbose 'We think the email message body is a simple string'
-		Log-verbose 'Calling Format-Report and passing it the $body variable'
+		Log-Verbose -Color 'Yellow' 'We think the email message body is a simple string'
+		Log-Verbose -Color 'Yellow' 'Calling Format-Report and passing it the $body variable'
 		$messageObject.Body = Format-Report -bodyarray $body
 	}
 	
@@ -837,16 +839,16 @@ Function Email-Report {
 		Return $return
 	} else {
 		#send the lastmessage
-		Log-Debug "$($return.function): subject: $($email.subject)"
-		Log-Debug "$($return.function): body: $($email.body)"
+		Log-Debug -Color 'Red' "$($return.function): subject: $($email.subject)"
+		Log-Debug -Color 'Red' "$($return.function): body: $($email.body)"
 
 		If ($PSCmdlet.ShouldProcess($email.recipients,"Sending email of subject ""$($email.subject)"" with body ""$($email.body)""")) {
 			Try {
-				Log-Verbose "To: $($email.Recipients)"
-				Log-Verbose "From: $($email.sender)"
-				Log-Verbose "Subject: $($email.subject)"
-				Log-Debug "Body: $($email.body)"
-				Log-Verbose "SmtpServer: $($email.smtpserver)"
+				Log-Verbose -Color 'Yellow' "To: $($email.Recipients)"
+				Log-Verbose -Color 'Yellow' "From: $($email.sender)"
+				Log-Verbose -Color 'Yellow' "Subject: $($email.subject)"
+				Log-Debug -Color 'Red' "Body: $($email.body)"
+				Log-Verbose -Color 'Yellow' "SmtpServer: $($email.smtpserver)"
 				<#Send-MailMessage -To $email.recipients -From $email.sender `
 					-Subject $email.subject `
 					-Body $email.body `
@@ -861,7 +863,7 @@ Function Email-Report {
 		}
 	}
 	
-	Log-Verbose "Leaving $($return.function) function, version $($return.Version)"
+	Log-Verbose -Color 'Yellow' "Leaving $($return.function) function, version $($return.Version)"
 	Return $return
 }
 
@@ -884,11 +886,7 @@ Function Email-Report {
 #
 # =================================================
 
-#Write-Host ""
-#$null = Inform-Operator -preset "initiate"
-#Write-Host ""
 $date = Get-Date
-
 
 # Announce version to operator [Script Agnostic]
 Write-Host "`n" ("Welcome").Padleft(40," ") "`n" -foreground "Yellow"
@@ -898,7 +896,7 @@ Log-Entry " of the " -nonewline
 Log-Entry $SCRIPTNAME -foreground "Green" -nonewline
 Log-Entry " script. The time is $date"
 
-Log-Verbose "Now checking switches and arguments"
+Log-Verbose -Color 'Yellow' "Now checking switches and arguments"
 # Check switches and arguments here
 	
 	#info dumps
@@ -909,7 +907,7 @@ Log-Verbose "Now checking switches and arguments"
 	If ($param_help) { $null = Inform-Operator -preset "help"; $exitflag = $true }
 	If ($param_issues) { $null = Inform-Operator -preset "issues"; $exitflag = $true }
 	If ($param_requirements) { $null = Inform-Operator -preset "requirements"; $exitflag = $true }
-	If ($exitflag) { Log-Verbose "Exiting due to exitflag"; End }
+	If ($exitflag) { Log-Verbose -Color 'Yellow' "Exiting due to exitflag"; End }
 	
 	#script specific
 	
@@ -930,7 +928,7 @@ $counter = $param_resumeat - 1
 If (!$param_singleuser) {
 	#if the csv input path hasn't been specified on the commandline, prompt the user for it
 	if (!$param_csvpath) {
-		Log-Verbose Asking user for CSV path
+		Log-Verbose -Color 'Yellow' Asking user for CSV path
 		$csvpath = read-host -prompt "enter path to csv"
 	} else {
 		$csvpath = $param_csvpath
@@ -940,9 +938,9 @@ If (!$param_singleuser) {
 		$users = import-csv $csvpath
 	} catch {
 		Log-Entry 'Failed to import CSV. Reason as follows:'
-		Write-Host $_
-		Log-Verbose $_
-		End #quit since no users to process
+		Write-Host $_ #this is left as Write-Host instead of Log-Entry because Log-Entry seems to use the verbose output and all we need is 1 line
+		Log-Verbose -Color 'Yellow' $_
+		#End #quit since no users to process. TODO: fix this because it doesn't email a report
 	}
 } else {
 	$users = @()
@@ -967,13 +965,16 @@ $rowTemplate = @{
 
 $resultsArray = @()
 
+#find out what we're doing (i.e. using params or defaults, and is it messaging, calling or a package)
 $callingToApply		= $(If($param_callingpolicy) {$param_callingpolicy} else { If($param_nodefaults) { $null } else { $strGlobalCallingPolicy }})
 $messagingToApply	= $(If($param_messagingpolicy) {$param_messagingpolicy} else { If($param_nodefaults) { $null } else { $strGlobalMessagingPolicy }})
 $packageToApply		= $(If($param_policypackage) {$param_policypackage} else { If($param_nodefaults) { $null } else { $strGlobalPolicyPackage }})
 
+#if we have something to apply
 If ($callingToApply -or $messagingToApply -or $packageToApply) {
+	
+	#loop through all users
 	do { 
-
 		$row = $rowTemplate.PSObject.Copy()
 		$row.counter	= $counter+1
 		$row.UPN		= $users[$counter].Mail
@@ -984,9 +985,6 @@ If ($callingToApply -or $messagingToApply -or $packageToApply) {
 		$name = $users[$counter].GivenName + " " + $users[$counter].Surname
 		
 		Inform-Operator -start -function "$guicounter of $($users.count) $($row.username) $name $UPN"
-		
-		#Write-Host "Processing $guicounter of $($users.count) " -nonewline
-		#Write-Host " $($users[$counter].Mail)" -nonewline
 		
 		#check if policypackage, if so don't do calling or messaging
 		If (!$param_policypackage) {
@@ -999,27 +997,26 @@ If ($callingToApply -or $messagingToApply -or $packageToApply) {
 				$counter++
 				$row.callresult = "fail"
 				$row.callreason = $_
-				#Log-Entry " $($row.Callresult)" -foreground Red
 			}
 			
 			#apply the messaging policy
 			Try {
 				Grant-CsTeamsMessagingPolicy -PolicyName $messagingToApply  -Identity $UPN -EA SilentlyContinue
-				#Log-Entry " Done" -foreground Green
 				$counter++
 				$row.messageresult = "OK"
 			} catch {
-				#Log-Entry " Fail" -foreground Red
 				$counter++
 				$row.messageresult = "fail"
 				$row.messagereason = $_
 			}
+			
 			#check if either of the calls have an error present (i.e. they failed)
 			If (!($row.callreason -or $row.messagereason)) {
 				Inform-Operator -state "success"
 			} else {
 				Inform-Operator -state "fail" -notes "$($row.messagereason) $($row.callreason)"
 			}
+			
 		} else {
 			#apply the policy package
 			Try {
@@ -1028,7 +1025,6 @@ If ($callingToApply -or $messagingToApply -or $packageToApply) {
 				$row.packageresult = "OK"
 				Inform-Operator -state "success"
 			} catch {
-				#Log-Entry " Fail" -foreground Red
 				$counter++
 				$row.packageresult = "fail"
 				$row.packagereason = $_
@@ -1040,7 +1036,8 @@ If ($callingToApply -or $messagingToApply -or $packageToApply) {
 		$row = $null
 		
 	} while ($counter -le ($users.Count-1))
-	Log-Verbose 'finished processing all items.'
+	Log-Verbose -Color 'Yellow' 'finished processing all items.'
+	
 } else {
 	$message = "$($users.Count) of $($users.Count) users skippped as there was nothing to apply"
 	Log-Entry $message
@@ -1051,9 +1048,9 @@ If ($callingToApply -or $messagingToApply -or $packageToApply) {
 Function InternalOnly-EmailReport {
 	Write-Host ""
 	Inform-Operator -start -function "Emailing report"
-	Log-Verbose "Turn on debug logging (-debug) to view the array being sent to the email report function" -nonewline
-	Log-Debug $resultsArray -expand
-	$emailResult = Email-Report -body $resultsArray -html -from "BulkOperationScript@$strGlobalDefaultDomain" -subject "Bulk Operations at $(get-date -format HH:mm)" -to $globalReportRecipients
+	Log-Verbose -Color 'Yellow' "Turn on debug logging (-debug) to view the array being sent to the email report function" -nonewline
+	Log-Debug -Color 'Red' $resultsArray -expand
+	$emailResult = Email-Report -body $resultsArray -html -from "$($SCRIPTNAME.Replace(' ',''))@$strGlobalDefaultDomain" -subject "$SCRIPTNAME report $(get-date -format HH:mm)" -to $globalReportRecipients
 	Inform-Operator -state $emailResult.Result -notes $emailResult.LastMessage
 }
 InternalOnly-EmailReport
@@ -1094,6 +1091,19 @@ Function Global:ConvertTo-Text([Alias("Value")]$O, [Int]$Depth = 9, [Switch]$Typ
 }; Set-Alias CText ConvertTo-Text -Scope:Global -Description "Convert value to readable text"
 
 Function Global:Log-Entry {
+<#
+.Synopsis
+	Log-Entry
+.Description
+	A PowerShell framework for sophisticated logging
+.Notes
+	Author:    Ronald Bode
+	Version:   02.01.07
+	Created:   2009-03-18
+	Modified:  2018-09-13
+.Link
+	https://github.com/iRon7/Log-Entry
+#>
 	Param(
 		$0, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,	# PSv2 doesn't support PositionalBinding
 		[ConsoleColor]$BackgroundColor, [Alias("Color")][ConsoleColor]$ForegroundColor, [String]$Separator = " ", [Switch]$NoNewline,
