@@ -40,7 +40,7 @@ https://github.com/gostega/teams-bulk-policy
 #>
 
 
-[CmdletBinding()] param (
+[CmdletBinding()]param (
 	
 	#script agnostic paramaters
 	[Alias('test')][switch]$param_test, 
@@ -110,6 +110,8 @@ $strGlobalLogDestination = "$LOGPATH$LOGNAME"
 #Start Script
 Function Main {
 
+	Log-Debug "Debugging is ON"
+	
 	#set the target file for logging
 	If ($param_logfilepath) { 
 		Set-LogFile $param_logfilepath
@@ -120,7 +122,7 @@ Function Main {
 			Set-LogFile $strGlobalLogDestination
 		} else {
 			Log-Entry "No acceptable logfile path provided in paramaters or coded in script defaults. Using default log file location" -foreground 'DarkGray'
-			$strGlobalLogDestination = "$env:Temp\$($My.Name).Log"
+			$strGlobalLogDestination = "$env:Temp\$($My.Name)_$(Get-Date -format yyyy-MM-dd_HH-mm-ss).log"
 		}
 	}
 	Log-Entry "Logging to $strGlobalLogDestination" -foreground 'DarkGray'
@@ -149,7 +151,8 @@ $CHANGELOG_TEXT = "
          - improved help and comment text
    2.3.0 - improved logfile default location handling          2020-04-11
    2.3.1 - fixed -showlog not working (introduced in 2.3.0)    2020-04-11
-   2.3.2 - fixed -debug not working with Log-Entry             2020-04-14
+   2.3.2 - fixed -debug not being detected                     2020-04-14
+   2.3.3 - fixed Log-Debug not working in functions            2020-04-15
   ------------------------------Credits-----------------------------------
   Various internet sources may be used in the writing of this script.
   Sources and any code copied verbatim, will be noted in the function header
@@ -881,9 +884,9 @@ Function Email-Report {
 #
 # =================================================
 
-Write-Host ""
+#Write-Host ""
 #$null = Inform-Operator -preset "initiate"
-Write-Host ""
+#Write-Host ""
 $date = Get-Date
 
 
