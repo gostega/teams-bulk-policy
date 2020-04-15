@@ -101,7 +101,7 @@ https://github.com/gostega/teams-bulk-policy
 )
 
 # Top level global variables (Variables are script agnostic but with script specific values)
-$VERSION 	= "2.4.1"
+$VERSION 	= "2.4.2"
 $SCRIPTNAME = "Bulk Teams Policy Update Script"
 $LOGPATH	= "C:\logs\" #needs trailing slash \
 $LOGNAME	= "$(Get-Date -format yyyy-MM-dd_HH-mm-ss)_$($SCRIPTNAME -replace ' ', '').log"
@@ -154,7 +154,9 @@ $CHANGELOG_TEXT = "
    2.3.1 - fixed -showlog not working (introduced in 2.3.0)    2020-04-11
    2.3.2 - fixed -debug not being detected                     2020-04-14
    2.3.3 - fixed Log-Debug not working in functions            2020-04-15
-   2.4.0 - Change Log-Debug and Log-Verbose to Red and Yellow  2020-04-15 
+   2.4.0 - Change Log-Debug and Log-Verbose to Red and Yellow  2020-04-15
+   2.4.1 - Fixed $ VERSION showing as 2.3.3 instead of 2.4.0   2020-04-15
+   2.4.2 - Added missing 2.4.1 entry in CHANGELOG              2020-04-15
   ------------------------------Credits-----------------------------------
   Various internet sources may be used in the writing of this script.
   Sources and any code copied verbatim, will be noted in the function header
