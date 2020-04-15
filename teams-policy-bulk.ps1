@@ -101,7 +101,7 @@ https://github.com/gostega/teams-bulk-policy
 )
 
 # Top level global variables (Variables are script agnostic but with script specific values)
-$VERSION 	= "2.3.3"
+$VERSION 	= "2.4.1"
 $SCRIPTNAME = "Bulk Teams Policy Update Script"
 $LOGPATH	= "C:\logs\" #needs trailing slash \
 $LOGNAME	= "$(Get-Date -format yyyy-MM-dd_HH-mm-ss)_$($SCRIPTNAME -replace ' ', '').log"
